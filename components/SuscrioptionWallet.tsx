@@ -1,4 +1,3 @@
-import React from 'react'
 import CustomInput from './ui/CustomInput'
 import CustomButton from './ui/CustomButton'
 
