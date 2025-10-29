@@ -2,11 +2,11 @@ import { TransactionType } from "@/types/transactionsType"
 
 const Transaction = ({ transaction }: { transaction: TransactionType }) => {
   return (
-    <div>
-      <p>Type: {transaction.type}</p>
-      <p>Date: {transaction.date}</p>
-      <p>Amount: {transaction.amount}</p>
-      <p>Status: {transaction.status}</p>
+    <div className="flex border p-16 gap-4 rounded-lg shadow-sm bg-white dark:bg-gray-800">
+      <p> {transaction.type}</p>
+      <p> {transaction.date}</p>
+      <p> {transaction.amount}</p>
+      <p> {transaction.status}</p>
       <a href={transaction.link} target="_blank" rel="noopener noreferrer">View Transaction</a>
     </div>
   )
