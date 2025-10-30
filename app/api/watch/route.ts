@@ -14,7 +14,7 @@ export async function POST(request: Request) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           //  URL a la que Helius te va a notificar.
-          webhookURL: `${MY_PUBLIC_URL}/api/notify`,
+          webhookURL: `${MY_PUBLIC_URL}/app/api/notify`,
           
           // que wallets vigilar
           accountAddresses: [walletAddress],
