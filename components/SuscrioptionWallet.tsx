@@ -1,37 +1,47 @@
-// en app/components/SubscriptionWallet.tsx (o donde vivan tus componentes)
+"use client";
 
-"use client"; // 1. ¡MUY IMPORTANTE! Marca esto como un Componente de Cliente
+import { useState } from 'react';
+import { Models } from 'appwrite';
+import CustomInput from './ui/CustomInput';
+import CustomButton from './ui/CustomButton';
 
-import { useState } from 'react'
-import CustomInput from './ui/CustomInput'
-import CustomButton from './ui/CustomButton'
+// 1. Define un tipo para el documento Wallet que esperamos recibir de vuelta
+// (Esto es para el callback 'onWalletAdded')
+interface WalletDocument extends Models.Document {
+  address: string;
+  userId: string;
+}
 
-const SubscriptionWallet = () => {
-  const [walletAddress, setWalletAddress] = useState('')
+// 2. Define los PROPS que este componente AHORA ACEPTA
+interface SubscriptionWalletProps {
+  jwt: string | null; // El token de sesión del dashboard
+  onWalletAdded: (newWallet: WalletDocument) => void; // El callback para actualizar la lista
+}
 
-  // 2. Estados para manejar la UI mientras se hace la llamada
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState<string | null>(null)
-  const [success, setSuccess] = useState(false)
+const SubscriptionWallet = ({ jwt, onWalletAdded }: SubscriptionWalletProps) => {
+  const [walletAddress, setWalletAddress] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const handleInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    setWalletAddress(event.target.value)
-    // Limpia los mensajes de error/éxito cuando el usuario vuelve a escribir
-    setError(null)
-    setSuccess(false)
+    setWalletAddress(event.target.value);
+    setError(null);
   }
 
-  // 3. Esta es la función que llama a tu API Route
   const handleSubmit = async () => {
-    // No hacer nada si el input está vacío
     if (!walletAddress) {
       setError('Please enter a wallet address.');
       return;
     }
 
-    setIsLoading(true); // Pone la UI en modo "cargando"
+    // 3. Nueva Verificación: Asegúrate de que el JWT haya cargado
+    if (!jwt) {
+      setError('Session is not ready. Please wait a moment and try again.');
+      return;
+    }
+
+    setIsLoading(true);
     setError(null);
-    setSuccess(false);
 
     try {
       // 4. Llama a tu endpoint /api/watch
@@ -39,31 +49,29 @@ const SubscriptionWallet = () => {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          // 5. ¡LA MAGIA! Envía el JWT como un "Bearer Token"
+          'Authorization': `Bearer ${jwt}`
         },
-        body: JSON.stringify({ walletAddress: walletAddress }), // Envía el JSON que tu API espera
+        body: JSON.stringify({ walletAddress: walletAddress }),
+        // (Ya NO se usa 'credentials: "include"')
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        // Si la API devuelve un error (ej. status 500)
-        // 'data.error' es el mensaje que pusiste en el 'catch' de tu API Route
         throw new Error(data.error || 'An unknown error occurred');
       }
 
-      // 5. ¡Todo salió bien!
-      setSuccess(true);
-      setWalletAddress(''); // Limpia el input después del éxito
+      // 6. ¡Éxito!
+      setWalletAddress(''); // Limpia el input
+      onWalletAdded(data.document); // Llama al callback para actualizar la UI del Dashboard
 
     } catch (err) {
-      // Atrapa el error y lo muestra en la UI
       setError((err as Error).message);
     } finally {
-      // 6. Pase lo que pase (éxito o error), deja de cargar
       setIsLoading(false);
     }
   }
-  //
 
   return (
     <div className="flex flex-col items-center p-8">
@@ -75,22 +83,21 @@ const SubscriptionWallet = () => {
             placeholder="Enter your wallet address" 
             value={walletAddress} 
             onChange={handleInputChange} 
-            disabled={isLoading} // 7. Deshabilita el input mientras carga
+            // 7. Deshabilita si está cargando O si el JWT aún no ha llegado
+            disabled={isLoading || !jwt} 
           />
           <CustomButton 
-            text={isLoading ? "Tracking..." : "Track"} // Cambia el texto del botón
+            text={isLoading ? "Tracking..." : "Track"}
             onClick={handleSubmit} 
-            disabled={isLoading} // 7. Deshabilita el botón mientras carga
+            disabled={isLoading || !jwt} 
           />
         </div>
 
-        {/* 8. Muestra los mensajes de estado al usuario */}
         {error && (
           <p className="text-red-500 mt-4">{error}</p>
         )}
-        {success && (
-          <p className="text-green-500 mt-4">Success! This wallet is now being tracked.</p>
-        )}
+        {/* Ya no necesitamos un mensaje de 'success' aquí, 
+            porque el éxito se ve al instante en la lista de wallets */}
     </div>
   )
 }

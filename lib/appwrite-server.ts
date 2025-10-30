@@ -1,24 +1,20 @@
 // lib/appwrite-server.ts
 import { Client, Account } from 'appwrite';
 
-// Esta función ahora RECIBE el string de la cookie
-// en lugar de intentar leerla por sí misma.
-export async function getLoggedInUser(sessionCookie: string) {
+// Esta función valida un JWT y devuelve al usuario
+export async function getLoggedInUserFromJWT(jwt: string) {
   try {
-    // 1. Creamos un *nuevo* cliente SDK
     const client = new Client()
       .setEndpoint(process.env.NEXT_PUBLIC_APPWRITE_ENDPOINT!)
-      .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!);
-
-    // 2. Ponemos la cookie que recibimos como parámetro
-    client.setSession(sessionCookie);
+      .setProject(process.env.NEXT_PUBLIC_APPWRITE_PROJECT_ID!)
+      .setJWT(jwt); // ¡La magia! Le decimos al cliente que use este JWT
 
     const account = new Account(client);
     const user = await account.get(); // Intenta obtener el usuario
     return user;
-
   } catch (error) {
-    // Si la cookie no es válida, falla
+    // Si el JWT es inválido o expiró, falla
+    console.error('Error obteniendo usuario desde JWT:', error);
     return null;
   }
 }
