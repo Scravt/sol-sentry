@@ -10,6 +10,7 @@ import CustomButton from './ui/CustomButton';
 interface WalletDocument extends Models.Document {
   address: string;
   userId: string;
+  name: string;
 }
 
 // 2. Define los PROPS que este componente AHORA ACEPTA
@@ -20,6 +21,7 @@ interface SubscriptionWalletProps {
 
 const SubscriptionWallet = ({ jwt, onWalletAdded }: SubscriptionWalletProps) => {
   const [walletAddress, setWalletAddress] = useState('');
+  const [walletName, setWalletName] = useState(''); // Correcto
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -27,10 +29,19 @@ const SubscriptionWallet = ({ jwt, onWalletAdded }: SubscriptionWalletProps) => 
     setWalletAddress(event.target.value);
     setError(null);
   }
+  const handleInputChangeName = (event: React.ChangeEvent<HTMLInputElement>) => {
+    setWalletName(event.target.value);
+    setError(null);
+  }
+
 
   const handleSubmit = async () => {
     if (!walletAddress) {
       setError('Please enter a wallet address.');
+      return;
+    }
+    if (!walletName) {
+      setError('Please enter a wallet name.');
       return;
     }
 
@@ -44,16 +55,20 @@ const SubscriptionWallet = ({ jwt, onWalletAdded }: SubscriptionWalletProps) => 
     setError(null);
 
     try {
-      // 4. Llama a tu endpoint /api/watch
+      // Llama a tu endpoint
       const response = await fetch('/api/watch', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          // 5. ¡LA MAGIA! Envía el JWT como un "Bearer Token"
+          //  Envía el JWT como un "Bearer Token"
           'Authorization': `Bearer ${jwt}`
         },
-        body: JSON.stringify({ walletAddress: walletAddress }),
-        // (Ya NO se usa 'credentials: "include"')
+        // ¡¡¡CAMBIO 1: AÑADE walletName AL PAYLOAD!!!
+        body: JSON.stringify({
+          walletAddress: walletAddress,
+          walletName: walletName // <--- LA LÍNEA QUE FALTABA
+        }),
+
       });
 
       const data = await response.json();
@@ -62,8 +77,10 @@ const SubscriptionWallet = ({ jwt, onWalletAdded }: SubscriptionWalletProps) => 
         throw new Error(data.error || 'An unknown error occurred');
       }
 
-      // 6. ¡Éxito!
+
       setWalletAddress(''); // Limpia el input
+      // ¡¡¡CAMBIO 2: Limpia el input del nombre!!!
+      setWalletName(''); // <--- AÑADIDO PARA MEJOR UX
       onWalletAdded(data.document); // Llama al callback para actualizar la UI del Dashboard
 
     } catch (err) {
@@ -74,30 +91,34 @@ const SubscriptionWallet = ({ jwt, onWalletAdded }: SubscriptionWalletProps) => 
   }
 
   return (
+    // Tu JSX para el formulario está perfecto, no necesita cambios
     <div className="flex flex-col items-center p-8">
-        <h1 className="text-3xl font-bold mb-4">
-            Enter the wallet address you want to track
-        </h1>
-        <div className='w-4/5 flex items-center gap-4'>
-          <CustomInput 
-            placeholder="Enter your wallet address" 
-            value={walletAddress} 
-            onChange={handleInputChange} 
-            // 7. Deshabilita si está cargando O si el JWT aún no ha llegado
-            disabled={isLoading || !jwt} 
-          />
-          <CustomButton 
-            text={isLoading ? "Tracking..." : "Track"}
-            onClick={handleSubmit} 
-            disabled={isLoading || !jwt} 
-          />
-        </div>
+      <h1 className="text-3xl font-bold mb-4">
+        Enter the wallet address you want to track
+      </h1>
+      <div className='w-4/5 flex items-center gap-4'>
+        <CustomInput
+          placeholder="Name your wallet"
+          value={walletName}
+          onChange={handleInputChangeName}
+          disabled={isLoading || !jwt}
+        />
+        <CustomInput
+          placeholder="Enter your wallet address"
+          value={walletAddress}
+          onChange={handleInputChange}
+          disabled={isLoading || !jwt}
+           />
+        <CustomButton
+          text={isLoading ? "Tracking..." : "Track"}
+          onClick={handleSubmit}
+          disabled={isLoading || !jwt}
+        />
+      </div>
 
-        {error && (
-          <p className="text-red-500 mt-4">{error}</p>
-        )}
-        {/* Ya no necesitamos un mensaje de 'success' aquí, 
-            porque el éxito se ve al instante en la lista de wallets */}
+      {error && (
+        <p className="text-red-500 mt-4">{error}</p>
+      )}
     </div>
   )
 }

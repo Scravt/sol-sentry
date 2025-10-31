@@ -1,5 +1,4 @@
 "use client";
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { account } from '@/lib/appwrite-client';
@@ -14,14 +13,11 @@ const LoginPage = () => {
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
-
     try {
       // 1. Crea la sesión de email
       await account.createEmailPasswordSession(email, password);
-      
       // 2. Si tiene éxito, redirige al dashboard (o a donde quieras)
-      router.push('/dashboard'); // (Crearemos esta página después)
-
+      router.push('/dashboard'); 
     } catch (err) {
       if (err instanceof AppwriteException) {
         setError(err.message);
@@ -35,7 +31,6 @@ const LoginPage = () => {
     <div className="flex justify-center items-center min-h-screen">
       <form onSubmit={handleLogin} className="p-8 bg-gray-800 rounded-lg shadow-xl w-96">
         <h1 className="text-2xl font-bold mb-6 text-center">Login</h1>
-        
         {error && (
           <p className="bg-red-500 text-white p-3 rounded-md mb-4">{error}</p>
         )}

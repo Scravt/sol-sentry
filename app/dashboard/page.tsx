@@ -15,6 +15,7 @@ const COLLECTION_ID_WALLETS = process.env.NEXT_PUBLIC_APPWRITE_COLLECTION_ID_WAL
 interface WalletDocument extends Models.Document {
   address: string;
   userId: string;
+  name: string;
 }
 
 const DashboardPage = () => {
@@ -113,7 +114,7 @@ const DashboardPage = () => {
                 key={wallet.$id} 
                 className="bg-gray-800 p-4 rounded-lg shadow flex justify-between items-center"
               >
-                <span className="font-mono text-lg">{wallet.address}</span>
+                <span className="font-mono text-lg">{wallet.name}</span>
                 {/* Aquí puedes agregar un botón para ver transacciones o borrar */}
               </li>
             ))}
